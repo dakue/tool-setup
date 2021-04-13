@@ -1,0 +1,184 @@
+---
+- hosts: localhost
+  connection: local
+  vars:
+    cache_directory: "{{ ansible_env.HOME }}/.local/cache"
+    bin_directory: "{{ ansible_env.HOME }}/.local/bin"
+    completions_directory: "{{ ansible_env.HOME }}/.local/share/bash-completion/completions"
+    terraform_version: 0.13.5
+    terragrunt_version: 0.28.11
+    terraform_docs_version: 0.11.2
+    terraform_ls_version: 0.15.0
+    helm_version: 3.5.3
+    kubectl_version: 1.18.16
+    fzf_version: 0.24.3
+    task_version: 3.2.2
+    pre_commit_version: 2.11.1
+    sops_version: 3.7.1
+  tasks:
+    - name: set architecture string to amd64 for downloads
+      set_fact:
+        download_architecture: amd64 
+      when:
+        - ansible_architecture == 'x86_64'
+    - name: set architecture string to arm64 for downloads
+      set_fact:
+        download_architecture: arm64 
+      when:
+        - ansible_architecture == 'aarch64'
+    - name: create cache directory
+      file:
+        state: directory
+        path: "{{ cache_directory }}"
+    - name: create bin directory
+      file:
+        state: directory
+        path: "{{ bin_directory }}"
+    - name: create completions directory
+      file:
+        state: directory
+        path: "{{ completions_directory }}"
+    - name: download terraform
+      get_url:
+        url: "https://releases.hashicorp.com/terraform/{{ terraform_version }}/terraform_{{ terraform_version }}_linux_{{ download_architecture }}.zip"
+        dest: "{{ cache_directory }}/terraform_{{ terraform_version }}_linux_{{ download_architecture }}.zip"
+    - name: unzip terraform
+      unarchive:
+        src: "{{ cache_directory }}/terraform_{{ terraform_version }}_linux_{{ download_architecture }}.zip"
+        dest: "{{ bin_directory }}"
+        mode: "0755"
+    - name: add terraform completion
+      copy:
+        dest: "{{ completions_directory }}/terraform"
+        content: |
+          complete -C {{ bin_directory }}/terraform terraform
+    - name: download terragrunt
+      get_url:
+        url: "https://github.com/gruntwork-io/terragrunt/releases/download/v{{ terragrunt_version }}/terragrunt_linux_{{ download_architecture }}"
+        dest: "{{ cache_directory }}/terragrunt_{{ terragrunt_version }}_linux_{{ download_architecture }}"
+    - name: move terragrunt
+      copy:
+        src: "{{ cache_directory }}/terragrunt_{{ terragrunt_version }}_linux_{{ download_architecture }}"
+        dest: "{{ bin_directory }}/terragrunt"
+        mode: "0755"
+    - name: download terraform-docs
+      get_url:
+        url: "https://github.com/terraform-docs/terraform-docs/releases/download/v{{ terraform_docs_version }}/terraform-docs-v{{ terraform_docs_version }}-linux-{{ download_architecture }}"
+        dest: "{{ cache_directory }}/terraform-docs-v{{ terraform_docs_version }}-linux-{{ download_architecture }}"
+    - name: move terraform-docs
+      copy:
+        src: "{{ cache_directory }}/terraform-docs-v{{ terraform_docs_version }}-linux-{{ download_architecture }}"
+        dest: "{{ bin_directory }}/terraform-docs"
+        mode: "0755"
+    - name: create terraform-docs completion
+      shell: "terraform-docs completion bash > {{ completions_directory }}/terraform-docs"
+      args:
+        creates: "{{ completions_directory }}/terraform-docs"
+    - name: download terraform-ls
+      get_url:
+        url: "https://github.com/hashicorp/terraform-ls/releases/download/v{{ terraform_ls_version }}/terraform-ls_{{ terraform_ls_version }}_linux_{{ download_architecture }}.zip"
+        dest: "{{ cache_directory }}/terraform-ls_{{ terraform_ls_version }}_linux_{{ download_architecture }}.zip"    
+    - name: unpack terraform-ls
+      unarchive:
+        src: "{{ cache_directory }}/terraform-ls_{{ terraform_ls_version }}_linux_{{ download_architecture }}.zip"
+        dest: "{{ bin_directory }}"
+    - name: download helm
+      get_url:
+        url: "https://get.helm.sh/helm-v{{ helm_version }}-linux-{{ download_architecture }}.tar.gz"
+        dest: "{{ cache_directory }}/helm-v{{ helm_version }}-linux-{{ download_architecture }}.tar.gz"
+    - name: unpack helm
+      unarchive:
+        src: "{{ cache_directory }}/helm-v{{ helm_version }}-linux-{{ download_architecture }}.tar.gz"
+        dest: "{{ bin_directory }}"
+        extra_opts:
+          - --strip-components=1
+          - linux-{{ download_architecture }}/helm
+    - name: create helm completion
+      shell: "helm completion bash > {{ completions_directory }}/helm"
+      args:
+        creates: "{{ completions_directory }}/helm"
+    - name: download kubectl
+      get_url:
+        url: "https://dl.k8s.io/v{{ kubectl_version }}/kubernetes-client-linux-{{ download_architecture }}.tar.gz"
+        dest: "{{ cache_directory }}/kubernetes-client-v{{ kubectl_version }}-linux-{{ download_architecture }}.tar.gz"
+    - name: unpack kubectl
+      unarchive:
+        src: "{{ cache_directory }}/kubernetes-client-v{{ kubectl_version }}-linux-{{ download_architecture }}.tar.gz"
+        dest: "{{ bin_directory }}"
+        extra_opts:
+          - --strip-components=3
+          - kubernetes/client/bin/kubectl
+    - name: create kubectl completion
+      shell: "kubectl completion bash > {{ completions_directory }}/kubectl"
+      args:
+        creates: "{{ completions_directory }}/kubectl"
+    - name: download fzf
+      get_url:
+        url: "https://github.com/junegunn/fzf/releases/download/{{ fzf_version }}/fzf-{{ fzf_version }}-linux_{{ download_architecture }}.tar.gz"
+        dest: "{{ cache_directory }}/fzf-{{ fzf_version }}-linux_{{ download_architecture }}.tgz"
+    - name: unpack fzf
+      unarchive:
+        src: "{{ cache_directory }}/fzf-{{ fzf_version }}-linux_{{ download_architecture }}.tgz"
+        dest: "{{ bin_directory }}"
+    - name: download task
+      get_url:
+        url: "https://github.com/go-task/task/releases/download/v{{ task_version }}/task_linux_{{ download_architecture }}.tar.gz"
+        dest: "{{ cache_directory }}/task_v{{ task_version }}_linux_{{ download_architecture }}.tar.gz"
+    - name: unpack task
+      unarchive:
+        src: "{{ cache_directory }}/task_v{{ task_version }}_linux_{{ download_architecture }}.tar.gz"
+        dest: "{{ bin_directory }}"
+        extra_opts:
+          - task 
+    - name: download task completion
+      get_url:
+        url: "https://raw.githubusercontent.com/go-task/task/master/completion/bash/task.bash"
+        dest: "{{ completions_directory }}/task"
+    - name: download sops
+      get_url:
+        url: "https://github.com/mozilla/sops/releases/download/v{{ sops_version }}/sops-v{{ sops_version }}.linux"
+        dest: "{{ cache_directory }}/sops-v{{ sops_version }}.linux"
+      when:
+        - ansible_architecture == 'x86_64'
+    - name: move sops
+      copy:
+        src: "{{ cache_directory }}/sops-v{{ sops_version }}.linux"
+        dest: "{{ bin_directory }}/sops"
+        mode: "0755"
+      when:
+        - ansible_architecture == 'x86_64'
+    - name: install aws cli
+      pip:
+        name: awscli
+        extra_args: --user
+    - name: add aws completion
+      copy:
+        dest: "{{ completions_directory }}/aws"
+        content: |
+          complete -C '{{ bin_directory }}/aws_completer' aws
+    - name: install aws-google-auth
+      pip:
+        name: aws-google-auth
+        extra_args: --user
+    - name: install pre-commit
+      pip:
+        name: "pre-commit=={{pre_commit_version}}"
+        extra_args: --user
+    - name: install kubectx
+      git:
+        repo: https://github.com/ahmetb/kubectx 
+        dest: "{{ ansible_env.HOME }}/.kubectx"
+        update: yes
+        version: v0.9.1
+    - name: add kubens completion
+      file:
+        state: link
+        src: "{{ ansible_env.HOME }}/.kubectx/completion/kubens.bash"
+        dest: "{{ completions_directory }}/kubens"
+    - name: add kubectx completion
+      file:
+        state: link
+        src: "{{ ansible_env.HOME }}/.kubectx/completion/kubectx.bash"
+        dest: "{{ completions_directory }}/kubectx"
+
+# https://az764295.vo.msecnd.net/stable/e790b931385d72cf5669fcefc51cdf65990efa5d/code-stable-1599744987.tar.gz
