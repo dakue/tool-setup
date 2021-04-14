@@ -6,8 +6,8 @@
     bin_directory: "{{ ansible_env.HOME }}/.local/bin"
     completions_directory: "{{ ansible_env.HOME }}/.local/share/bash-completion/completions"
     terraform_version: 0.13.5
-    terragrunt_version: 0.28.11
-    terraform_docs_version: 0.11.2
+    terragrunt_version: 0.28.21
+    terraform_docs_version: 0.12.1
     terraform_ls_version: 0.15.0
     helm_version: 3.5.3
     kubectl_version: 1.18.16
