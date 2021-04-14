@@ -15,15 +15,18 @@
     task_version: 3.2.2
     pre_commit_version: 2.11.1
     sops_version: 3.7.1
+    starship_version: 0.51.0
+    check_jsonschema_version: 0.3.0
+    yamllint_version: 1.26.1
   tasks:
     - name: set architecture string to amd64 for downloads
       set_fact:
-        download_architecture: amd64 
+        download_architecture: amd64
       when:
         - ansible_architecture == 'x86_64'
     - name: set architecture string to arm64 for downloads
       set_fact:
-        download_architecture: arm64 
+        download_architecture: arm64
       when:
         - ansible_architecture == 'aarch64'
     - name: create cache directory
@@ -77,7 +80,7 @@
     - name: download terraform-ls
       get_url:
         url: "https://github.com/hashicorp/terraform-ls/releases/download/v{{ terraform_ls_version }}/terraform-ls_{{ terraform_ls_version }}_linux_{{ download_architecture }}.zip"
-        dest: "{{ cache_directory }}/terraform-ls_{{ terraform_ls_version }}_linux_{{ download_architecture }}.zip"    
+        dest: "{{ cache_directory }}/terraform-ls_{{ terraform_ls_version }}_linux_{{ download_architecture }}.zip"
     - name: unpack terraform-ls
       unarchive:
         src: "{{ cache_directory }}/terraform-ls_{{ terraform_ls_version }}_linux_{{ download_architecture }}.zip"
@@ -129,7 +132,7 @@
         src: "{{ cache_directory }}/task_v{{ task_version }}_linux_{{ download_architecture }}.tar.gz"
         dest: "{{ bin_directory }}"
         extra_opts:
-          - task 
+          - task
     - name: download task completion
       get_url:
         url: "https://raw.githubusercontent.com/go-task/task/master/completion/bash/task.bash"
@@ -147,6 +150,16 @@
         mode: "0755"
       when:
         - ansible_architecture == 'x86_64'
+    - name: download starship
+      get_url:
+        url: "https://github.com/starship/starship/releases/download/v{{ starship_version }}/starship-{{ ansible_architecture }}-unknown-linux-musl.tar.gz"
+        dest: "{{ cache_directory }}/starship-{{ starship_version }}-{{ansible_architecture }}-unknown-linux-musl.tar.gz"
+    - name: unpack starship
+      unarchive:
+        src: "{{ cache_directory }}/starship-{{ starship_version }}-{{ ansible_architecture }}-unknown-linux-musl.tar.gz"
+        dest: "{{ bin_directory }}"
+        extra_opts:
+          - starship
     - name: install aws cli
       pip:
         name: awscli
@@ -164,9 +177,22 @@
       pip:
         name: "pre-commit=={{pre_commit_version}}"
         extra_args: --user
+    - name: install check-jsonschema
+      pip:
+        name: "check-jsonschema=={{check_jsonschema_version}}"
+        extra_args: --user
+    - name: fix bug in check-jsonschema
+      lineinfile:
+        path: "{{ bin_directory }}/check-jsonschema"
+        regexp: "^from check_jsonschema import main"
+        line: "from check_jsonschema.cli import main"
+    - name: install yamllint
+      pip:
+        name: "yamllint=={{yamllint_version}}"
+        extra_args: --user
     - name: install kubectx
       git:
-        repo: https://github.com/ahmetb/kubectx 
+        repo: https://github.com/ahmetb/kubectx
         dest: "{{ ansible_env.HOME }}/.kubectx"
         update: yes
         version: v0.9.1
