@@ -245,5 +245,16 @@
         state: link
         src: "{{ ansible_env.HOME }}/.kubectx/completion/kubectx.bash"
         dest: "{{ completions_directory }}/kubectx"
-
+    - name: create global npm directory
+      file:
+        state: directory
+        path: "{{ ansible_env.HOME }}/.local/npm"
+    - name: add bash-language-server
+      shell:
+        cmd: "npm install -g --prefix {{ ansible_env.HOME }}/.local/npm bash-language-server"
+      creates: "{{ ansible_env.HOME }}/.local/npm/bin/bash-language-server"
+    - name: add yaml-language-server
+      shell:
+        cmd: "npm install -g --prefix {{ ansible_env.HOME }}/.local/npm yaml-language-server"
+      creates: "{{ ansible_env.HOME }}/.local/npm/bin/yaml-language-server"
 # https://az764295.vo.msecnd.net/stable/e790b931385d72cf5669fcefc51cdf65990efa5d/code-stable-1599744987.tar.gz
