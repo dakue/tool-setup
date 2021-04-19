@@ -21,6 +21,7 @@
     yamllint_version: 1.26.1
     ttyd_version: 1.6.3
     code_server_version: 3.9.3
+    pynvim_version: 0.4.3
   tasks:
     - name: set architecture string to amd64 for downloads
       set_fact:
@@ -228,6 +229,10 @@
     - name: install yamllint
       pip:
         name: "yamllint=={{yamllint_version}}"
+        extra_args: --user
+    - name: install pynvim
+      pip:
+        name: "pynvim=={{pynvim_version}}"
         extra_args: --user
     - name: install kubectx
       git:
