@@ -22,6 +22,7 @@
     ttyd_version: 1.6.3
     code_server_version: 3.9.3
     pynvim_version: 0.4.3
+    k3d_version: 4.4.2
   tasks:
     - name: set architecture string to amd64 for downloads
       set_fact:
@@ -200,6 +201,15 @@
       file:
         state: directory
         path: "{{ ansible_env.HOME }}/.local/share/code-server/extensions"
+    - name: download k3d
+      get_url:
+        url: "https://github.com/rancher/k3d/releases/download/v{{ k3d_version }}/k3d-linux-{{ download_architecture }}"
+        dest: "{{ cache_directory }}/k3d-linux-{{ download_architecture }}-{{ k3d_version }}"
+    - name: move k3d
+      copy:
+        src: "{{ cache_directory }}/k3d-linux-{{ download_architecture }}-{{ k3d_version }}"
+        dest: "{{ bin_directory }}/k3d"
+        mode: "0755"
     - name: install aws cli
       pip:
         name: awscli

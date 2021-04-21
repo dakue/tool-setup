@@ -50,7 +50,7 @@ jobs:
       - buildx-install
       - run: |
           export DOCKER_TAG="$(echo << pipeline.git.revision >> | cut -c 1-7)"
-          docker buildx build --push --platform linux/arm64,linux/amd64 --tag dakue/docker-glauth:latest --tag dakue/docker-glauth:$DOCKER_TAG .
+          docker buildx build --push --platform linux/arm64,linux/amd64 --tag dakue/tools:latest --tag dakue/tools:$DOCKER_TAG .
 workflows:
   version: 2
   build:
