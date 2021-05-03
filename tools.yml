@@ -6,7 +6,7 @@
     bin_directory: "{{ ansible_env.HOME }}/.local/bin"
     lib_directory: "{{ ansible_env.HOME }}/.local/lib"
     completions_directory: "{{ ansible_env.HOME }}/.local/share/bash-completion/completions"
-    terraform_version: 0.15.0
+    terraform_version: 0.13.4
     terragrunt_version: 0.29.0
     terraform_docs_version: 0.12.1
     terraform_ls_version: 0.15.0
