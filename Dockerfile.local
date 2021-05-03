@@ -1,0 +1,27 @@
+FROM docker.io/debian:bullseye-20210408-slim
+
+RUN set -x && \
+  sed -i 's|main|main contrib non-free|g' /etc/apt/sources.list && \
+  echo 'deb http://deb.debian.org/debian buster-backports main contrib non-free' >> /etc/apt/sources.list && \
+  apt-get update && \
+  apt-get install -y --no-install-recommends ansible curl git-core tmux neovim unzip python3-pip python3-setuptools nodejs npm python3-lxml python3-pil && \
+  apt-get clean && \
+  rm -rf /var/lib/apt/lists/*
+
+RUN set -x && \
+  adduser --shell /bin/bash --disabled-password --gecos "dev" dev
+
+USER dev
+WORKDIR /home/dev
+
+ADD . /tmp/tool-setup/
+
+RUN set -x && \
+  cd /tmp/tool-setup && \
+  export PATH=$PATH:$HOME/.local/bin && \
+  ansible-playbook tools.yml -e 'ansible_python_interpreter=/usr/bin/python3' && \
+  cd $HOME && \
+  git clone https://github.com/dakue/dotfiles.git && \
+  cd dotfiles && \
+  ansible-playbook dotfiles.yml -e 'ansible_python_interpreter=/usr/bin/python3' && \
+  rm -rf $HOME/.local/cache
