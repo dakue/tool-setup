@@ -25,6 +25,7 @@
     k3d_version: 4.4.2
     awscli_version: 2.2.1
     aws_vault_version: 6.3.1
+    ec2instanceconnectcli_version: 1.0.2
   tasks:
     - name: set architecture string to amd64 for downloads
       set_fact:
@@ -262,6 +263,10 @@
     - name: install pynvim
       pip:
         name: "pynvim=={{pynvim_version}}"
+        extra_args: --user
+    - name: install ec2instanceconnectcli
+      pip:
+        name: "ec2instanceconnectcli=={{ec2instanceconnectcli_version}}"
         extra_args: --user
     - name: install kubectx
       git:
