@@ -232,10 +232,6 @@
         dest: "{{ completions_directory }}/aws"
         content: |
           complete -C '{{ bin_directory }}/aws_completer' aws
-    - name: install aws-google-auth
-      pip:
-        name: aws-google-auth
-        extra_args: --user
     - name: install pre-commit
       pip:
         name: "pre-commit=={{pre_commit_version}}"
