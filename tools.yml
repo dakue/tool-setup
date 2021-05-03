@@ -23,6 +23,7 @@
     code_server_version: 3.9.3
     pynvim_version: 0.4.3
     k3d_version: 4.4.2
+    awscli_version: 2.2.1
   tasks:
     - name: set architecture string to amd64 for downloads
       set_fact:
@@ -210,10 +211,22 @@
         src: "{{ cache_directory }}/k3d-linux-{{ download_architecture }}-{{ k3d_version }}"
         dest: "{{ bin_directory }}/k3d"
         mode: "0755"
-    - name: install aws cli
-      pip:
-        name: awscli
-        extra_args: --user
+    - name: download awscli
+      get_url:
+        url: "https://awscli.amazonaws.com/awscli-exe-linux-{{ ansible_architecture }}-{{ awscli_version }}.zip"
+        dest: "{{ cache_directory }}/awscli-exe-linux-{{ ansible_architecture }}-{{ awscli_version }}.zip"
+      register: download_awscli
+    - name: unpack awscli
+      unarchive:
+        src: "{{ cache_directory }}/awscli-exe-linux-{{ ansible_architecture }}-{{ awscli_version }}.zip"
+        dest: "/tmp"
+      register: unpack_awscli
+      when: download_awscli.changed
+    - name: install awscli
+      shell:
+        cmd: "/tmp/aws/install --install-dir {{ ansible_env.HOME }}/.local/aws --bin-dir {{ bin_directory }}"
+        creates: "{{ bin_directory }}/aws"
+      when: unpack_awscli.changed
     - name: add aws completion
       copy:
         dest: "{{ completions_directory }}/aws"
