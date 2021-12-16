@@ -8,35 +8,41 @@
     completions_directory: "{{ ansible_env.HOME }}/.local/share/bash-completion/completions"
     terraform_version: 0.13.4
     terragrunt_version: 0.29.0
-    terraform_docs_version: 0.12.1
-    terraform_ls_version: 0.15.0
+    terraform_docs_version: 0.16.0
+    terraform_ls_version: 0.25.0
     helm_version: 3.5.4
     kubectl_version: 1.18.16
     fzf_version: 0.24.3
     task_version: 3.4.2
     pre_commit_version: 2.11.1
     sops_version: 3.7.1
-    starship_version: 0.51.0
+    starship_version: 1.0.0
     check_jsonschema_version: 0.3.0
     yamllint_version: 1.26.1
     ttyd_version: 1.6.3
-    code_server_version: 3.9.3
+    code_server_version: 3.11.0
     pynvim_version: 0.4.3
-    k3d_version: 4.4.2
+    k3d_version: 5.2.1
     awscli_version: 2.2.1
     aws_vault_version: 6.3.1
     ec2instanceconnectcli_version: 1.0.2
+    yaml_language_server_version: 1.2.2
+    bash_language_server_version: 2.0.0
   tasks:
     - name: set architecture string to amd64 for downloads
       set_fact:
         download_architecture: amd64
       when:
         - ansible_architecture == 'x86_64'
+      tags:
+        - always
     - name: set architecture string to arm64 for downloads
       set_fact:
         download_architecture: arm64
       when:
         - ansible_architecture == 'aarch64'
+      tags:
+        - always
     - name: create cache directory
       file:
         state: directory
@@ -78,13 +84,14 @@
         mode: "0755"
     - name: download terraform-docs
       get_url:
-        url: "https://github.com/terraform-docs/terraform-docs/releases/download/v{{ terraform_docs_version }}/terraform-docs-v{{ terraform_docs_version }}-linux-{{ download_architecture }}"
-        dest: "{{ cache_directory }}/terraform-docs-v{{ terraform_docs_version }}-linux-{{ download_architecture }}"
-    - name: move terraform-docs
-      copy:
-        src: "{{ cache_directory }}/terraform-docs-v{{ terraform_docs_version }}-linux-{{ download_architecture }}"
-        dest: "{{ bin_directory }}/terraform-docs"
-        mode: "0755"
+        url: "https://github.com/terraform-docs/terraform-docs/releases/download/v{{ terraform_docs_version }}/terraform-docs-v{{ terraform_docs_version }}-linux-{{ download_architecture }}.tar.gz"
+        dest: "{{ cache_directory }}/terraform-docs-v{{ terraform_docs_version }}-linux-{{ download_architecture }}.tar.gz"
+    - name: unpack terraform-docs
+      unarchive:
+        src: "{{ cache_directory }}/terraform-docs-v{{ terraform_docs_version }}-linux-{{ download_architecture }}.tar.gz"
+        dest: "{{ bin_directory }}"
+        extra_opts:
+          - terraform-docs
     - name: create terraform-docs completion
       shell: "terraform-docs completion bash > {{ completions_directory }}/terraform-docs"
       args:
@@ -93,10 +100,14 @@
       get_url:
         url: "https://github.com/hashicorp/terraform-ls/releases/download/v{{ terraform_ls_version }}/terraform-ls_{{ terraform_ls_version }}_linux_{{ download_architecture }}.zip"
         dest: "{{ cache_directory }}/terraform-ls_{{ terraform_ls_version }}_linux_{{ download_architecture }}.zip"
+      tags:
+        - terraform-ls
     - name: unpack terraform-ls
       unarchive:
         src: "{{ cache_directory }}/terraform-ls_{{ terraform_ls_version }}_linux_{{ download_architecture }}.zip"
         dest: "{{ bin_directory }}"
+      tags:
+        - terraform-ls
     - name: download helm
       get_url:
         url: "https://get.helm.sh/helm-v{{ helm_version }}-linux-{{ download_architecture }}.tar.gz"
@@ -290,10 +301,10 @@
         path: "{{ ansible_env.HOME }}/.local/npm"
     - name: add bash-language-server
       shell:
-        cmd: "npm install -g --prefix {{ ansible_env.HOME }}/.local/npm bash-language-server"
+        cmd: "npm install -g --prefix {{ ansible_env.HOME }}/.local/npm bash-language-server@{{bash_language_server_version}}"
         creates: "{{ ansible_env.HOME }}/.local/npm/bin/bash-language-server"
     - name: add yaml-language-server
       shell:
-        cmd: "npm install -g --prefix {{ ansible_env.HOME }}/.local/npm yaml-language-server"
+        cmd: "npm install -g --prefix {{ ansible_env.HOME }}/.local/npm yaml-language-server@{{yaml_language_server_version}}"
         creates: "{{ ansible_env.HOME }}/.local/npm/bin/yaml-language-server"
 # https://az764295.vo.msecnd.net/stable/e790b931385d72cf5669fcefc51cdf65990efa5d/code-stable-1599744987.tar.gz
