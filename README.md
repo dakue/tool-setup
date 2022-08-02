@@ -5,5 +5,5 @@
 ### Manjaro
 
 ```
-pacman -Sy unzip node npm
+pacman -Sy unzip nodejs npm python-pip
 ```
