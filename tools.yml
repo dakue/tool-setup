@@ -6,28 +6,31 @@
     bin_directory: "{{ ansible_env.HOME }}/.local/bin"
     lib_directory: "{{ ansible_env.HOME }}/.local/lib"
     completions_directory: "{{ ansible_env.HOME }}/.local/share/bash-completion/completions"
-    terraform_version: 0.13.4
+    terraform_version: 1.2.3
     terragrunt_version: 0.29.0
     terraform_docs_version: 0.16.0
-    terraform_ls_version: 0.25.0
-    helm_version: 3.5.4
-    kubectl_version: 1.18.16
+    terraform_ls_version: 0.28.1
+    helm_version: 3.9.0
+    kubectl_version: 1.24.1
     fzf_version: 0.24.3
     task_version: 3.4.2
     pre_commit_version: 2.11.1
-    sops_version: 3.7.1
-    starship_version: 1.0.0
+    sops_version: 3.7.3
+    starship_version: 1.8.0
     check_jsonschema_version: 0.3.0
     yamllint_version: 1.26.1
     ttyd_version: 1.6.3
-    code_server_version: 3.11.0
+    code_server_version: 4.4.0
     pynvim_version: 0.4.3
-    k3d_version: 5.2.1
-    awscli_version: 2.2.1
+    k3d_version: 5.4.1
+    awscli_version: 2.7.9
     aws_vault_version: 6.3.1
+    aws_vault_enabled: false
     ec2instanceconnectcli_version: 1.0.2
-    yaml_language_server_version: 1.2.2
-    bash_language_server_version: 2.0.0
+    ec2instanceconnectcli_enabled: false
+    yaml_language_server_version: 1.8.0
+    bash_language_server_version: 3.0.4
+    kustomize_version: 4.5.5
   tasks:
     - name: set architecture string to amd64 for downloads
       set_fact:
@@ -228,11 +231,13 @@
       get_url:
         url: "https://github.com/99designs/aws-vault/releases/download/v{{ aws_vault_version }}/aws-vault-linux-{{ download_architecture }}"
         dest: "{{ cache_directory }}/aws-vault-linux-{{ download_architecture }}-{{ aws_vault_version }}"
+      when: aws_vault_enabled | default(true)
     - name: move aws-vault
       copy:
         src: "{{ cache_directory }}/aws-vault-linux-{{ download_architecture }}-{{ aws_vault_version }}"
         dest: "{{ bin_directory }}/aws-vault"
         mode: "0755"
+      when: aws_vault_enabled | default(true)
     - name: download awscli
       get_url:
         url: "https://awscli.amazonaws.com/awscli-exe-linux-{{ ansible_architecture }}-{{ awscli_version }}.zip"
@@ -254,6 +259,14 @@
         dest: "{{ completions_directory }}/aws"
         content: |
           complete -C '{{ bin_directory }}/aws_completer' aws
+    - name: download kustomize
+      get_url:
+        url: "https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2Fv4.5.5/kustomize_v4.5.5_linux_amd64.tar.gz"
+        dest: "{{ cache_directory }}/kustomize_v{{ kustomize_version }}_{{ansible_architecture }}.tar.gz"
+    - name: unpack kustomize
+      unarchive:
+        src: "{{ cache_directory }}/kustomize_v{{ kustomize_version }}_{{ansible_architecture }}.tar.gz"
+        dest: "{{ bin_directory }}"
     - name: install pre-commit
       pip:
         name: "pre-commit=={{pre_commit_version}}"
@@ -279,6 +292,7 @@
       pip:
         name: "ec2instanceconnectcli=={{ec2instanceconnectcli_version}}"
         extra_args: --user
+      when: ec2instanceconnectcli_enabled | default(true)
     - name: install kubectx
       git:
         repo: https://github.com/ahmetb/kubectx
